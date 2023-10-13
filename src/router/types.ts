@@ -103,7 +103,8 @@ export interface NavigateOptions {
     state?: unknown;
 }
 
-export type FetcherWithDirective<TData> = Fetcher<TData> & {
+export type FetcherWithDirective<TData> = {
+    fetcher: Fetcher<TData>;
     submit(
         target:
             | HTMLFormElement

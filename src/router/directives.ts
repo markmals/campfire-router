@@ -6,7 +6,7 @@ import type { Part } from 'lit';
 import { noChange } from 'lit';
 import type { DirectiveParameters, PartInfo } from 'lit/async-directive.js';
 import { AsyncDirective, PartType, directive } from 'lit/async-directive.js';
-import type { RouterController } from './router-controller';
+import type { Router } from './router-controller';
 import type { HTMLFormSubmitter, IRouterContext, NavigateFunction } from './types';
 import { submitImpl } from './utils';
 
@@ -71,7 +71,7 @@ class FormDirective extends AsyncDirective {
     }
 
     render(
-        _controller: RouterController,
+        _controller: Router,
         _routerContext: IRouterContext,
         _replace: boolean,
         _fetcherKey: string | null,
@@ -108,7 +108,7 @@ class FormDirective extends AsyncDirective {
 
     private handleSubmit(
         form: HTMLFormElement,
-        controller: RouterController,
+        controller: Router,
         routerContext: IRouterContext,
         replace: boolean,
         fetcherKey: string | null,

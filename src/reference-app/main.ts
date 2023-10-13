@@ -1,45 +1,39 @@
 import { redirect, type ActionFunctionArgs, type LoaderFunctionArgs } from '@remix-run/router';
-import { LitElement, html } from 'lit';
+import { html } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import { repeat } from 'lit/directives/repeat.js';
-import { RouterController } from '../router/router-controller';
-import { createBrowserRouter } from '../router/routers';
-import type { FetcherWithDirective, RouteObject } from '../router/types';
+import { Router } from '../router/router-controller';
+import type { FetcherWithDirective } from '../router/types';
 import { WatchedElement } from '../signals/signal-element';
 import type { ITask } from './tasks';
 import { addTask, deleteTask, getTasks } from './tasks';
 import { sleep } from './utils';
 
-import type { ReadonlySignal } from '@lit-labs/preact-signals';
 import '../router/elements';
+import { RouterProvider } from '../router/router-controller';
 
 @customElement('app-task-item')
 export class TaskItemElement extends WatchedElement {
     @property({ attribute: false })
     accessor task!: ITask;
 
-    #controller = new RouterController(this);
-    #fetcher!: ReadonlySignal<FetcherWithDirective<unknown>>;
+    #router = new Router(this);
+    #fetcher!: FetcherWithDirective<unknown>;
 
     connectedCallback() {
         super.connectedCallback();
-        this.#fetcher = this.#controller.getFetcher();
+        this.#fetcher = this.#router.getFetcher();
     }
 
     get isDeleting() {
-        return this.#fetcher.value.formData != null;
+        return this.#fetcher.fetcher.formData != null;
     }
 
     render() {
         return html`
             <span>${this.task.name}</span>
-            <a href="/${this.task.id}" ${this.#controller.enhanceLink()}>Open</a>
-            <form
-                style="display: inline"
-                action="/"
-                method="post"
-                ${this.#fetcher.value.enhanceForm()}
-            >
+            <a href="/${this.task.id}" ${this.#router.enhanceLink()}>Open</a>
+            <form style="display: inline" action="/" method="post" ${this.#fetcher.enhanceForm()}>
                 <button
                     type="submit"
                     name="taskId"
@@ -55,14 +49,10 @@ export class TaskItemElement extends WatchedElement {
 
 @customElement('route-new-task')
 export class NewTaskRoute extends WatchedElement {
-    #controller = new RouterController(this);
-
-    get navigation() {
-        return this.#controller.navigation.value;
-    }
+    #router = new Router(this);
 
     get isAdding() {
-        return this.navigation.state !== 'idle';
+        return this.#router.navigation.state !== 'idle';
     }
 
     static async action({ request }: ActionFunctionArgs) {
@@ -75,7 +65,7 @@ export class NewTaskRoute extends WatchedElement {
     render() {
         return html`
             <h3>New Task</h3>
-            <form method="post" action="/new" ${this.#controller.enhanceForm()}>
+            <form method="post" action="/new" ${this.#router.enhanceForm()}>
                 <input name="newTask" />
                 <button type="submit" ?disabled=${this.isAdding}>
                     ${this.isAdding ? 'Adding...' : 'Add'}
@@ -87,11 +77,10 @@ export class NewTaskRoute extends WatchedElement {
 
 @customElement('route-task')
 export class TaskRoute extends WatchedElement {
-    #controller = new RouterController(this);
+    #router = new Router(this);
 
     get task() {
-        return (this.#controller.loaderData.value as Awaited<ReturnType<typeof TaskRoute.loader>>)
-            ?.task;
+        return (this.#router.loaderData as Awaited<ReturnType<typeof TaskRoute.loader>>)?.task;
     }
 
     static async loader({ params }: LoaderFunctionArgs) {
@@ -111,10 +100,10 @@ export class TaskRoute extends WatchedElement {
 
 @customElement('route-tasks')
 export class TasksRoute extends WatchedElement {
-    #controller = new RouterController(this);
+    #router = new Router(this);
 
     get data() {
-        return this.#controller.loaderData.value as Awaited<ReturnType<typeof TasksRoute.loader>>;
+        return this.#router.loaderData as Awaited<ReturnType<typeof TasksRoute.loader>>;
     }
 
     static async loader() {
@@ -141,44 +130,40 @@ export class TasksRoute extends WatchedElement {
                     task => html`<li><app-task-item .task="${task}"></app-task-item></li>`,
                 )}
             </ul>
-            <a href="/new" ${this.#controller.enhanceLink()}>Add New Task</a>
-            <router-outlet></router-outlet>
+            <a href="/new" ${this.#router.enhanceLink()}>Add New Task</a>
+            ${this.#router.outlet()}
         `;
     }
 }
 
 @customElement('app-main')
-export class TasksApp extends LitElement {
-    routes: RouteObject[] = [
-        {
-            path: '/',
-            loader: TasksRoute.loader,
-            action: TasksRoute.action,
-            template: () => html`<route-tasks></route-tasks>`,
-            children: [
-                {
-                    path: ':id',
-                    loader: TaskRoute.loader,
-                    template: () => html`<route-task></route-task>`,
-                },
-                {
-                    path: 'new',
-                    action: NewTaskRoute.action,
-                    template: () => html`<route-new-task></route-new-task>`,
-                },
-            ],
-        },
-    ];
-
-    router = createBrowserRouter(this.routes);
-    fallback = html`<p>Loading...</p>`;
+export class TasksApp extends WatchedElement {
+    #provider = new RouterProvider(
+        this,
+        [
+            {
+                path: '/',
+                loader: TasksRoute.loader,
+                action: TasksRoute.action,
+                template: () => html`<route-tasks></route-tasks>`,
+                children: [
+                    {
+                        path: ':id',
+                        loader: TaskRoute.loader,
+                        template: () => html`<route-task></route-task>`,
+                    },
+                    {
+                        path: 'new',
+                        action: NewTaskRoute.action,
+                        template: () => html`<route-new-task></route-new-task>`,
+                    },
+                ],
+            },
+        ],
+        html`<p>Loading...</p>`,
+    );
 
     render() {
-        return html`
-            <router-provider
-                .router="${this.router}"
-                .fallback="${this.fallback}"
-            ></router-provider>
-        `;
+        return this.#provider.outlet();
     }
 }
