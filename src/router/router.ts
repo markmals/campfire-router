@@ -25,6 +25,7 @@ import type {
     IRouterContext,
     NavigateOptions,
     RouteObject,
+    SubmitFunction,
 } from './types.js';
 import { createURL, getPathContributingMatches, submitImpl } from './utils.js';
 
@@ -153,6 +154,10 @@ export class Router implements ReactiveController {
         }
 
         return path.pathname + search;
+    };
+
+    submit: SubmitFunction = (target, options = {}) => {
+        submitImpl(this.#routerContext.router, this.formAction(), target, options);
     };
 
     enhanceForm = (options: { replace: boolean } = { replace: false }) => {

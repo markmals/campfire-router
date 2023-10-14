@@ -192,10 +192,7 @@ export class ContactsRootElement extends WatchedElement {
         return this.#router.loaderData as Awaited<ReturnType<typeof loader>>;
     }
 
-    // submit() {
-    //     this.#router.submit()
-    // }
-
+    submit = this.#router.submit;
     navigate = this.#router.navigate;
 
     get searching() {
@@ -234,9 +231,9 @@ export class ContactsRootElement extends WatchedElement {
                         <input
                             aria-label="Search contacts"
                             class="${classMap({ loading: this.searching })}"
-                            .value="${this.data.q ?? ''}"
                             id="q"
                             name="q"
+                            value="${this.data.q ?? ''}"
                             @input="${this.#onInput}"
                             placeholder="Search"
                             type="search"
@@ -304,12 +301,16 @@ export class ContactsRootElement extends WatchedElement {
     }
 
     #onInput = (event: InputEvent & { currentTarget: HTMLInputElement }) => {
+        console.log(event.currentTarget.value);
+        // FIXME: This isn't rendering correctly, causes stutters every time you type
         // Remove empty query params when value is empty
-        // if (!event.currentTarget.value) {
-        //     this.navigate('/');
-        //     return;
-        // }
-        // const isFirstSearch = this.data.q === null;
-        // this.submit(event.currentTarget.form, { replace: !isFirstSearch });
+        if (!event.currentTarget.value) {
+            this.navigate('/');
+            return;
+        }
+
+        const isFirstSearch = this.data.q === null;
+        this.submit(event.currentTarget.form, { replace: !isFirstSearch });
+        // this.navigate(`/?q=${event.currentTarget.value}`, { replace: !isFirstSearch });
     };
 }
