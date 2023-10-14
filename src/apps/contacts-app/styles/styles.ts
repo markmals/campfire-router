@@ -49,59 +49,6 @@ export const sharedStyles = css`
         color: #f44250;
     }
 
-    #contact-form {
-        display: flex;
-        max-width: 40rem;
-        flex-direction: column;
-        gap: 1rem;
-    }
-    #contact-form > p:first-child {
-        margin: 0;
-        padding: 0;
-    }
-    #contact-form > p:first-child > :nth-child(2) {
-        margin-right: 1rem;
-    }
-    #contact-form > p:first-child,
-    #contact-form label {
-        display: flex;
-    }
-    #contact-form p:first-child span,
-    #contact-form label span {
-        width: 8rem;
-    }
-    #contact-form p:first-child input,
-    #contact-form label input,
-    #contact-form label textarea {
-        flex-grow: 2;
-    }
-
-    #contact-form-avatar {
-        margin-right: 2rem;
-    }
-
-    #contact-form-avatar img {
-        width: 12rem;
-        height: 12rem;
-        background: hsla(0, 0%, 0%, 0.2);
-        border-radius: 1rem;
-    }
-
-    #contact-form-avatar input {
-        box-sizing: border-box;
-        width: 100%;
-    }
-
-    #contact-form p:last-child {
-        display: flex;
-        gap: 0.5rem;
-        margin: 0 0 0 8rem;
-    }
-
-    #contact-form p:last-child button[type='button'] {
-        color: inherit;
-    }
-
     .sr-only {
         position: absolute;
         width: 1px;

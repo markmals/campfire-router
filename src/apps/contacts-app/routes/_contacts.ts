@@ -6,7 +6,7 @@ import { customElement, query } from 'lit/decorators.js';
 import { classMap } from 'lit/directives/class-map.js';
 import { repeat } from 'lit/directives/repeat.js';
 import { when } from 'lit/directives/when.js';
-import { createContact, getContacts } from '~/lib/data';
+import { createContact, getContacts } from '~/lib/contacts';
 import { sharedStyles } from '~/styles/styles';
 
 export async function loader({ request }: LoaderFunctionArgs) {
@@ -248,7 +248,7 @@ export class ContactsRootElement extends WatchedElement {
                         ></div>
                         <div aria-live="polite" class="sr-only"></div>
                     </form>
-                    <form method="post" ${this.#router.enhanceForm()}>
+                    <form method="post" action="/" ${this.#router.enhanceForm()}>
                         <button type="submit">New</button>
                     </form>
                 </div>

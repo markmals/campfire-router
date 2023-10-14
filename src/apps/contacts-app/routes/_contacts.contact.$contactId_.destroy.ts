@@ -3,7 +3,7 @@ import type { ActionFunctionArgs } from '@remix-run/router';
 import { redirect } from '@remix-run/router';
 import { html } from 'lit';
 import { customElement } from 'lit/decorators.js';
-import { deleteContact } from '~/lib/data';
+import { deleteContact } from '~/lib/contacts';
 
 export async function action({ params }: ActionFunctionArgs) {
     await deleteContact(params.contactId!);

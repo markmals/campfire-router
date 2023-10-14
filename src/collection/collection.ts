@@ -60,7 +60,7 @@ export class Collection<Item extends StorageValue & Identifiable> {
             collection.items = items;
         }
 
-        if (initialValue !== undefined) {
+        if (initialValue !== undefined && collection.isEmpty) {
             collection.add(initialValue);
         }
 

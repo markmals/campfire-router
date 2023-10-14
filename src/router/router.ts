@@ -237,7 +237,8 @@ export class Router implements ReactiveController {
             nextLocationPathname != null &&
             (nextLocationPathname === toPathname ||
                 (nextLocationPathname.startsWith(toPathname) &&
-                    nextLocationPathname.charAt(toPathname.length) === '/'))
+                    nextLocationPathname.charAt(toPathname.length) === '/')) &&
+            !this.isActive(to)
         );
     };
 
