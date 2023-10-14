@@ -1,23 +1,24 @@
 import { html } from 'lit';
 import { customElement } from 'lit/decorators.js';
-import { RouterProvider } from '../../router/router.js';
-import type { RouteObject } from '../../router/types.js';
-import { EffectElement } from '../../signals/signal-element.js';
 
-import './routes/_contacts._index.js';
+import type { RouteObject } from '@campfirejs/router';
+import { RouterProvider } from '@campfirejs/router';
+import { WatchedElement } from '@campfirejs/signals';
+
+import { displayContents } from './styles/styles';
+
+import { action as rootAction, loader as rootLoader } from './routes/_contacts';
+import './routes/_contacts._index';
 import {
     action as contactAction,
     loader as contactLoader,
-} from './routes/_contacts.contact.$contactId.js';
-import { action as destroyAction } from './routes/_contacts.contact.$contactId_.destroy.js';
-import { action as rootAction, loader as rootLoader } from './routes/_contacts.js';
+} from './routes/_contacts.contact.$contactId';
+import { action as destroyAction } from './routes/_contacts.contact.$contactId_.destroy';
 
-import '../../router/elements';
-import './error.js';
-import { displayContents } from './styles.js';
+import './elements/error';
 
 @customElement('contacts-app')
-export class ContactsAppElement extends EffectElement {
+export class ContactsAppElement extends WatchedElement {
     static styles = [displayContents];
 
     #provider: RouterProvider;

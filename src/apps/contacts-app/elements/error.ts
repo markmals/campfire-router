@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { Router } from '@campfirejs/router';
+import { WatchedElement } from '@campfirejs/signals';
 import { css, html } from 'lit';
 import { customElement } from 'lit/decorators.js';
-import { Router } from '../../router/router';
-import { EffectElement } from '../../signals/signal-element';
 
 @customElement('contacts-error')
-export class ErrorElement extends EffectElement {
+export class ErrorElement extends WatchedElement {
     static styles = [
         css`
             :host {

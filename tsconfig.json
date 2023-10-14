@@ -9,15 +9,20 @@
 
         /* Bundler mode */
         "moduleResolution": "Bundler",
-        // "allowImportingTsExtensions": true,
         "resolveJsonModule": true,
         "isolatedModules": true,
 
         /* Linting */
         "strict": true,
-        // "noUnusedLocals": true,
-        // "noUnusedParameters": true,
-        "noFallthroughCasesInSwitch": true
+        "noFallthroughCasesInSwitch": true,
+
+        "baseUrl": ".",
+        "paths": {
+            "~/*": ["src/apps/contacts-app/*"],
+            "@campfirejs/router": ["src/router/index.ts"],
+            "@campfirejs/signals": ["src/signals/index.ts"],
+            "@campfirejs/storage": ["src/collection/index.ts"]
+        }
     },
     "include": ["src"]
 }

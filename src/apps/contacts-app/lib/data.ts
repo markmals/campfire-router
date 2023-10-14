@@ -1,6 +1,5 @@
+import { IndexedDBStorageEngine, createCollection } from '@campfirejs/storage';
 import { matchSorter } from 'match-sorter';
-import { createCollection } from '../../collection/collection.js';
-import { IndexedDBStorageEngine } from '../../collection/storage-engine/idb-storage-engine.js';
 
 export interface IContact {
     id: string;
@@ -15,7 +14,7 @@ export interface IContact {
 
 export const defaultContacts: IContact[] = [
     {
-        id: '0',
+        id: '4j1use5',
         first: 'Vivian',
         last: 'Chou',
         avatar: 'https://i.imgur.com/9kzTyn7.jpg',
@@ -24,7 +23,7 @@ export const defaultContacts: IContact[] = [
         createdAt: Date.now(),
     },
     {
-        id: '1',
+        id: 'xhanpn8',
         first: 'Priya',
         last: 'Shah',
         avatar: 'https://i.imgur.com/35TQppC.jpg',
@@ -33,7 +32,7 @@ export const defaultContacts: IContact[] = [
         createdAt: Date.now(),
     },
     {
-        id: '2',
+        id: 'chfc5lf',
         first: 'Tania',
         last: 'Castillo',
         avatar: 'https://i.imgur.com/t1MXkoL.jpg',
@@ -42,7 +41,7 @@ export const defaultContacts: IContact[] = [
         createdAt: Date.now(),
     },
     {
-        id: '3',
+        id: 'epgjbgi',
         first: 'Andre',
         last: 'Lorico',
         avatar: 'https://i.imgur.com/teExVnJ.jpg',
@@ -51,7 +50,7 @@ export const defaultContacts: IContact[] = [
         createdAt: Date.now(),
     },
     {
-        id: '4',
+        id: 'tbw8va6',
         first: 'Sam',
         last: 'Denis',
         avatar: 'https://i.imgur.com/jK0zHfm.jpg',
@@ -60,7 +59,7 @@ export const defaultContacts: IContact[] = [
         createdAt: Date.now(),
     },
     {
-        id: '5',
+        id: 'ynh8mc3',
         first: 'Albert',
         last: 'Puig',
         avatar: 'https://i.imgur.com/Jy3Hbr6.jpg',

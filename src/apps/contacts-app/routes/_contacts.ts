@@ -1,14 +1,13 @@
+import { Router, type LoaderFunctionArgs } from '@campfirejs/router';
+import { WatchedElement } from '@campfirejs/signals';
 import { effect } from '@lit-labs/preact-signals';
-import type { LoaderFunctionArgs } from '@remix-run/router';
 import { css, html } from 'lit';
 import { customElement, query } from 'lit/decorators.js';
 import { classMap } from 'lit/directives/class-map.js';
 import { repeat } from 'lit/directives/repeat.js';
 import { when } from 'lit/directives/when.js';
-import { Router } from '../../../router/router.js';
-import { EffectElement } from '../../../signals/signal-element.js';
-import { createContact, getContacts } from '../data.js';
-import { sharedStyles } from '../styles.js';
+import { createContact, getContacts } from '~/lib/data';
+import { sharedStyles } from '~/styles/styles';
 
 export async function loader({ request }: LoaderFunctionArgs) {
     const url = new URL(request.url);
@@ -23,7 +22,7 @@ export async function action() {
 }
 
 @customElement('contacts-root')
-export class ContactsRootElement extends EffectElement {
+export class ContactsRootElement extends WatchedElement {
     static styles = [
         sharedStyles,
         css`

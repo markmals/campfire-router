@@ -1,6 +1,6 @@
 import type { StorageEngine } from './storage-engine';
 
-type StorageValue = null | string | number | boolean | object;
+export type StorageValue = null | string | number | boolean | object;
 
 export interface ToString {
     toString(): string;

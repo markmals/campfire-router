@@ -1,12 +1,15 @@
-import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/router';
+import type {
+    ActionFunctionArgs,
+    FetcherWithDirective,
+    LoaderFunctionArgs,
+} from '@campfirejs/router';
+import { Router } from '@campfirejs/router';
+import { WatchedElement } from '@campfirejs/signals';
 import { css, html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { when } from 'lit/directives/when.js';
-import { Router } from '../../../router/router';
-import type { FetcherWithDirective } from '../../../router/types';
-import { EffectElement } from '../../../signals/signal-element';
-import { getContact, updateContact } from '../data';
-import { sharedStyles } from '../styles';
+import { getContact, updateContact } from '~/lib/data';
+import { sharedStyles } from '~/styles/styles';
 
 export async function loader({ params }: LoaderFunctionArgs) {
     const contact = await getContact(params.contactId!);
@@ -30,7 +33,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 }
 
 @customElement('contact-details')
-export class ContactDetailsElement extends EffectElement {
+export class ContactDetailsElement extends WatchedElement {
     static styles = [
         sharedStyles,
         css`
@@ -166,7 +169,7 @@ export class ContactDetailsElement extends EffectElement {
 }
 
 @customElement('contact-favorite')
-export class ContactFavoriteElement extends EffectElement {
+export class ContactFavoriteElement extends WatchedElement {
     static styles = [
         sharedStyles,
         css`

@@ -1,18 +1,21 @@
-import { redirect, type ActionFunctionArgs, type LoaderFunctionArgs } from '@remix-run/router';
 import { html } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import { repeat } from 'lit/directives/repeat.js';
-import { Router, RouterProvider } from '../../router/router.js';
-import type { FetcherWithDirective } from '../../router/types.js';
-import { EffectElement } from '../../signals/signal-element.js';
-import type { ITask } from './tasks.js';
-import { addTask, deleteTask, getTasks } from './tasks.js';
-import { sleep } from './utils.js';
 
-import '../../router/elements';
+import type {
+    ActionFunctionArgs,
+    FetcherWithDirective,
+    LoaderFunctionArgs,
+} from '@campfirejs/router';
+import { Router, RouterProvider, redirect } from '@campfirejs/router';
+import { WatchedElement } from '@campfirejs/signals';
+
+import type { ITask } from './tasks';
+import { addTask, deleteTask, getTasks } from './tasks';
+import { sleep } from './utils';
 
 @customElement('task-item')
-export class TaskItemElement extends EffectElement {
+export class TaskItemElement extends WatchedElement {
     @property({ attribute: false })
     accessor task!: ITask;
 
@@ -54,7 +57,7 @@ async function newTaskAction({ request }: ActionFunctionArgs) {
 }
 
 @customElement('new-task')
-export class NewTaskRoute extends EffectElement {
+export class NewTaskRoute extends WatchedElement {
     #router = new Router(this);
 
     get isAdding() {
@@ -81,7 +84,7 @@ async function taskLoader({ params }: LoaderFunctionArgs) {
 }
 
 @customElement('task-detail')
-export class TaskRoute extends EffectElement {
+export class TaskRoute extends WatchedElement {
     #router = new Router(this);
 
     get task() {
@@ -108,7 +111,7 @@ async function tasksAction({ request }: ActionFunctionArgs) {
 }
 
 @customElement('task-list')
-export class TasksRoute extends EffectElement {
+export class TasksRoute extends WatchedElement {
     #router = new Router(this);
 
     get tasks() {
@@ -131,7 +134,7 @@ export class TasksRoute extends EffectElement {
 }
 
 @customElement('tasks-app')
-export class TasksApp extends EffectElement {
+export class TasksApp extends WatchedElement {
     routes = [
         {
             path: '/',
