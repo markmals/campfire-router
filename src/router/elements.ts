@@ -2,15 +2,23 @@ import type { ReadonlySignal } from '@lit-labs/preact-signals';
 import { SignalWatcher, signal } from '@lit-labs/preact-signals';
 import { ContextProvider } from '@lit/context';
 import { isRouteErrorResponse } from '@remix-run/router';
-import { LitElement, html, nothing } from 'lit';
+import { LitElement, css, html, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { when } from 'lit/directives/when.js';
-import { routeContext, routeErrorContext } from './context';
-import { Router } from './router-controller';
-import type { DataRouteMatch } from './types';
+import { routeContext, routeErrorContext } from './context.js';
+import { Router } from './router.js';
+import type { DataRouteMatch } from './types.js';
 
 @customElement('route-wrapper')
 export class RouteWrapper extends SignalWatcher(LitElement) {
+    static styles = [
+        css`
+            :host {
+                display: contents;
+            }
+        `,
+    ];
+
     @property({ attribute: false })
     @state()
     accessor routeId!: ReadonlySignal<string>;

@@ -1,7 +1,7 @@
 import type { ReadonlySignal, Signal } from '@lit-labs/preact-signals';
 import { computed, signal } from '@lit-labs/preact-signals';
 import { ContextConsumer, ContextProvider } from '@lit/context';
-import type { Fetcher, Path, RouterState, To } from '@remix-run/router';
+import type { Fetcher, Path, RelativeRoutingType, RouterState, To } from '@remix-run/router';
 import {
     createPath,
     resolveTo,
@@ -13,9 +13,9 @@ import type { TemplateResult } from 'lit';
 import { html, isServer, nothing, type ReactiveController, type ReactiveElement } from 'lit';
 import { when } from 'lit/directives/when.js';
 import invariant from 'tiny-invariant';
-import { routeContext, routeErrorContext, routerContext } from './context';
-import { form, link } from './directives';
-import { createBrowserRouter, createMemoryRouter } from './routers';
+import { routeContext, routeErrorContext, routerContext } from './context.js';
+import { form, link } from './directives.js';
+import { createBrowserRouter, createMemoryRouter } from './routers.js';
 import type {
     CreateBrowserRouterOpts,
     CreateMemoryRouterOpts,
@@ -25,8 +25,8 @@ import type {
     IRouterContext,
     NavigateOptions,
     RouteObject,
-} from './types';
-import { createURL, getPathContributingMatches, submitImpl } from './utils';
+} from './types.js';
+import { createURL, getPathContributingMatches, submitImpl } from './utils.js';
 
 let fetcherId = 0;
 
@@ -106,22 +106,17 @@ export class Router implements ReactiveController {
         return this.#state.value.actionData?.[this.#routeContext.id.value];
     }
 
-    resolvedPath = (to: To): ReadonlySignal<Path> =>
-        computed(() =>
-            resolveTo(
-                to,
-                getPathContributingMatches(this.#routeContext.matches).map(
-                    match => match.pathnameBase,
-                ),
-                this.location.pathname,
-            ),
+    resolvedPath = (to: To, { relative }: { relative?: RelativeRoutingType } = {}): Path =>
+        resolveTo(
+            to,
+            getPathContributingMatches(this.#routeContext.matches).map(match => match.pathnameBase),
+            this.location.pathname,
+            relative === 'path',
         );
 
-    href = (to: To): ReadonlySignal<string> =>
-        computed(() =>
-            this.#routerContext.router.createHref(
-                createURL(this.#routerContext.router, createPath(this.resolvedPath(to).value)),
-            ),
+    href = (to: To): string =>
+        this.#routerContext.router.createHref(
+            createURL(this.#routerContext.router, createPath(this.resolvedPath(to))),
         );
 
     navigate = (to: To | number, options: NavigateOptions = {}) => {
@@ -146,15 +141,11 @@ export class Router implements ReactiveController {
         return link(this.navigate);
     };
 
-    formAction = (action = '.'): string => {
-        let { matches } = this.#routeContext;
-        let route = this.#routeContext;
+    // TODO: enhanceNavLink(options: { isActive: string, isPending: string })
 
-        let path = resolveTo(
-            action,
-            getPathContributingMatches(matches).map(match => match.pathnameBase),
-            this.location.pathname,
-        );
+    formAction = (action = '.', { relative }: { relative?: RelativeRoutingType } = {}): string => {
+        let route = this.#routeContext;
+        let path = this.resolvedPath(action, { relative });
 
         let search = path.search;
         if (action === '.' && route.index) {
@@ -179,8 +170,29 @@ export class Router implements ReactiveController {
         this.#onCleanup(() => router.deleteFetcher(fetcherKey));
 
         return {
-            get fetcher() {
-                return fetcher.value;
+            get state() {
+                return fetcher.value.state;
+            },
+            get formMethod() {
+                return fetcher.value.formMethod;
+            },
+            get formAction() {
+                return fetcher.value.formAction;
+            },
+            get formEncType() {
+                return fetcher.value.formEncType;
+            },
+            get text() {
+                return fetcher.value.text;
+            },
+            get formData() {
+                return fetcher.value.formData;
+            },
+            get json() {
+                return fetcher.value.json;
+            },
+            get data() {
+                return fetcher.value.data;
             },
             enhanceForm: (options = { replace: false }) => {
                 return form(this, this.#routerContext, options.replace, fetcherKey, id.value);
@@ -191,7 +203,7 @@ export class Router implements ReactiveController {
             load(href) {
                 return router.fetch(fetcherKey, id.value, href);
             },
-        };
+        } as FetcherWithDirective<TData>;
     };
 
     outlet = () =>
@@ -200,6 +212,34 @@ export class Router implements ReactiveController {
             routeContext: this.#routeContext,
             routeError: () => this.routeError,
         });
+
+    isActive = (to: To) => {
+        let path = this.resolvedPath(to);
+        let toPathname = path.pathname;
+
+        let locationPathname = this.location.pathname;
+
+        return (
+            locationPathname === toPathname ||
+            (locationPathname.startsWith(toPathname) &&
+                locationPathname.charAt(toPathname.length) === '/')
+        );
+    };
+
+    isPending = (to: To) => {
+        let path = this.resolvedPath(to);
+        let toPathname = path.pathname;
+
+        let nextLocationPathname =
+            this.navigation && this.navigation.location ? this.navigation.location.pathname : null;
+
+        return (
+            nextLocationPathname != null &&
+            (nextLocationPathname === toPathname ||
+                (nextLocationPathname.startsWith(toPathname) &&
+                    nextLocationPathname.charAt(toPathname.length) === '/'))
+        );
+    };
 
     /** @private */
     routeMatches(id: string): DataRouteMatch[] {

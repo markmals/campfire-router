@@ -1,14 +1,14 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-
+/* eslint-disable no-empty */
 import type { FormMethod } from '@remix-run/router';
 import type { Part } from 'lit';
 import { noChange } from 'lit';
 import type { DirectiveParameters, PartInfo } from 'lit/async-directive.js';
 import { AsyncDirective, PartType, directive } from 'lit/async-directive.js';
-import type { Router } from './router-controller';
-import type { HTMLFormSubmitter, IRouterContext, NavigateFunction } from './types';
-import { submitImpl } from './utils';
+import type { Router } from './router.js';
+import type { HTMLFormSubmitter, IRouterContext, NavigateFunction } from './types.js';
+import { submitImpl } from './utils.js';
 
 class LinkDirective extends AsyncDirective {
     #part?: Part = undefined;
@@ -25,6 +25,7 @@ class LinkDirective extends AsyncDirective {
         return noChange;
     }
 
+    updateFromLit = false;
     update(part: Part, [navigate]: DirectiveParameters<this>) {
         this.#part = part;
 
@@ -35,7 +36,10 @@ class LinkDirective extends AsyncDirective {
             throw new Error('LinkDirective must be used on an anchor element');
         }
 
-        this.#part.element.addEventListener('click', this.linkHandler(navigate));
+        if (!this.updateFromLit) {
+            this.#part.element.addEventListener('click', this.linkHandler(navigate));
+            this.updateFromLit = true;
+        }
     }
 
     private linkHandler(navigate: NavigateFunction) {
@@ -80,6 +84,7 @@ class FormDirective extends AsyncDirective {
         return noChange;
     }
 
+    updateFromLit = false;
     update(
         part: Part,
         [controller, routerContext, replace, fetcherKey, routeId]: DirectiveParameters<this>,
@@ -93,17 +98,20 @@ class FormDirective extends AsyncDirective {
             throw new Error('FormDirective must be used on a form element');
         }
 
-        this.#part.element.addEventListener(
-            'submit',
-            this.handleSubmit(
-                this.#part.element,
-                controller,
-                routerContext,
-                replace,
-                fetcherKey,
-                routeId,
-            ),
-        );
+        if (!this.updateFromLit) {
+            this.#part.element.addEventListener(
+                'submit',
+                this.handleSubmit(
+                    this.#part.element,
+                    controller,
+                    routerContext,
+                    replace,
+                    fetcherKey,
+                    routeId,
+                ),
+            );
+            this.updateFromLit = true;
+        }
     }
 
     private handleSubmit(
@@ -119,9 +127,18 @@ class FormDirective extends AsyncDirective {
                 return;
             }
             event.preventDefault();
+
+            // FIXME: I couldn't figure out the right way to do this
+            // console.log(form.action);
+            let resolvedAction = form.action;
+            try {
+                let url = new URL(resolvedAction);
+                resolvedAction = url.pathname;
+            } catch {}
+
             submitImpl(
                 routerContext.router,
-                controller.formAction(form.action),
+                controller.formAction(resolvedAction, { relative: 'route' }),
                 event.submitter || event.currentTarget,
                 {
                     method: form.method as FormMethod,

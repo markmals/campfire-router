@@ -9,8 +9,8 @@ import type {
     CreateHashRouterOpts,
     CreateMemoryRouterOpts,
     RouteObject,
-} from './types';
-import { enhanceManualRouteObjects } from './utils';
+} from './types.js';
+import { enhanceManualRouteObjects } from './utils.js';
 
 export function createMemoryRouter(
     routes: RouteObject[],

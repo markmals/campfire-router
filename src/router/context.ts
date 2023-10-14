@@ -1,5 +1,5 @@
 import { createContext } from '@lit/context';
-import type { IRouteContext, IRouteErrorContext, IRouterContext } from './types';
+import type { IRouteContext, IRouteErrorContext, IRouterContext } from './types.js';
 
 /** @private */
 export const routerContext = createContext<IRouterContext>(Symbol('router-context'));

@@ -7,9 +7,9 @@ import type {
     Router as RemixRouter,
     Router,
 } from '@remix-run/router';
-import type { SubmitOptions } from './dom';
-import { getFormSubmissionInfo } from './dom';
-import type { DataRouteMatch, RouteObject, SubmitTarget } from './types';
+import type { SubmitOptions } from './dom.js';
+import { getFormSubmissionInfo } from './dom.js';
+import type { DataRouteMatch, RouteObject, SubmitTarget } from './types.js';
 
 export function enhanceManualRouteObjects(routes: RouteObject[]): RouteObject[] {
     return routes.map(route => {

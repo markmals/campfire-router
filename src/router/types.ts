@@ -12,11 +12,11 @@ import type {
 } from '@remix-run/router';
 import type { TemplateResult } from 'lit';
 import type { DirectiveResult } from 'lit/async-directive.js';
-import type { FormDirective } from './directives';
-import type { SubmitOptions } from './dom';
+import type { FormDirective } from './directives.js';
+import type { SubmitOptions } from './dom.js';
 
-// Create Spark-specific types from the agnostic types in @remix-run/router to
-// export from @sparkjs/router
+// Create Campfire-specific types from the agnostic types in @remix-run/router to
+// export from @campfirejs/router
 export interface IndexRouteObject {
     caseSensitive?: AgnosticIndexRouteObject['caseSensitive'];
     path?: AgnosticIndexRouteObject['path'];
@@ -103,8 +103,7 @@ export interface NavigateOptions {
     state?: unknown;
 }
 
-export type FetcherWithDirective<TData> = {
-    fetcher: Fetcher<TData>;
+export type FetcherWithDirective<TData> = Fetcher<TData> & {
     submit(
         target:
             | HTMLFormElement
