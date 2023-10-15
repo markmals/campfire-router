@@ -67,8 +67,6 @@ export class EditContactElement extends LitElement {
         return (this.router.loaderData as Awaited<ReturnType<typeof loader>>).contact;
     }
 
-    navigate = this.router.navigate;
-
     render() {
         return html`
             <form method="post" ${this.router.enhanceForm()}>
@@ -114,7 +112,7 @@ export class EditContactElement extends LitElement {
                 </label>
                 <p>
                     <button type="submit">Save</button>
-                    <button @click="${() => this.navigate(-1)}" type="button">Cancel</button>
+                    <button @click="${() => this.router.navigate(-1)}" type="button">Cancel</button>
                 </p>
             </form>
         `;

@@ -182,21 +182,14 @@ export class ContactsRootElement extends LitElement {
 
     router = new Router(this);
 
-    get navigation() {
-        return this.router.navigation;
-    }
-
     get data() {
         return this.router.loaderData as Awaited<ReturnType<typeof loader>>;
     }
 
-    submit = this.router.submit;
-    navigate = this.router.navigate;
-
     get searching() {
         return (
-            (this.navigation.location &&
-                new URLSearchParams(this.navigation.location.search).has('q')) ??
+            (this.router.navigation.location &&
+                new URLSearchParams(this.router.navigation.location.search).has('q')) ??
             false
         );
     }
@@ -273,7 +266,10 @@ export class ContactsRootElement extends LitElement {
                     )}
                 </nav>
             </div>
-            <div class="${classMap({ loading: this.navigation.state !== 'idle' })}" id="detail">
+            <div
+                class="${classMap({ loading: this.router.navigation.state !== 'idle' })}"
+                id="detail"
+            >
                 ${this.router.outlet()}
             </div>
         `;
@@ -282,11 +278,11 @@ export class ContactsRootElement extends LitElement {
     onInput = (event: InputEvent & { currentTarget: HTMLInputElement }) => {
         // Remove empty query params when value is empty
         if (!event.currentTarget.value) {
-            this.navigate('/');
+            this.router.navigate('/');
             return;
         }
 
         const isFirstSearch = this.data.q === null;
-        this.submit(event.currentTarget.form, { replace: !isFirstSearch });
+        this.router.submit(event.currentTarget.form, { replace: !isFirstSearch });
     };
 }
