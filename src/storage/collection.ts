@@ -71,7 +71,7 @@ export async function createCollection<Item extends object>(
 
         #setItems(newValue: Item[]) {
             items = newValue;
-            this.dispatchEvent(new CollectionEvent(newValue));
+            super.dispatchEvent(new CollectionEvent(newValue));
         }
 
         get isEmpty() {
@@ -165,6 +165,10 @@ export async function createCollection<Item extends object>(
                 let identifier = (item[cacheId] as ToString).toString();
                 await storageEngine.delete(identifier);
             }
+        }
+
+        override dispatchEvent(_event: Event): boolean {
+            throw new Error('Cannot externally dispatch event on Collection');
         }
     })();
 
