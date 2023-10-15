@@ -21,7 +21,7 @@
             "~/*": ["src/apps/contacts-app/*"],
             "@campfirejs/router": ["src/router/index.ts"],
             "@campfirejs/signals": ["src/signals/index.ts"],
-            "@campfirejs/storage": ["src/collection/index.ts"]
+            "@campfirejs/storage": ["src/storage/index.ts"]
         }
     },
     "include": ["src"]
