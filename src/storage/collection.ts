@@ -25,21 +25,36 @@ export type CollectionOptions<Item extends object> = Item extends Identifiable
           initialValue?: Item[];
       };
 
-export type Collection<Item extends object> = {
+export type Collection<Item extends object> = EventTarget & {
     get items(): Item[];
     get isEmpty(): boolean;
     add(item: Item | Item[]): Promise<void>;
     delete(item: Item | Item[]): Promise<void>;
     clear(): Promise<void>;
-    subscribe(observable: (items: Item[]) => void): void;
+    addEventListener(
+        type: 'items-changed',
+        callback:
+            | ((event: CollectionEvent<Item>) => void)
+            | {
+                  handleEvent(object: CollectionEvent<Item>): void;
+              }
+            | null,
+        options?: boolean | AddEventListenerOptions | undefined,
+    ): void;
 };
+
+export class CollectionEvent<Item extends object> extends Event {
+    items: Item[];
+
+    constructor(items: Item[]) {
+        super('items-changed');
+        this.items = items;
+    }
+}
 
 export async function createCollection<Item extends object>(
     options: CollectionOptions<Item>,
 ): Promise<Collection<Item>> {
-    let items: Item[] = [];
-    const observers: ((items: Item[]) => void)[] = [];
-
     const {
         initialValue,
         storage: storageEngine,
@@ -47,49 +62,23 @@ export async function createCollection<Item extends object>(
     } = options as _CollectionOptions<Item>;
     const cacheId = cacheIdentifier || ('id' as keyof Item);
 
-    function setItems(newValue: Item[]) {
-        items = newValue;
-        observers.forEach(observer => observer(newValue));
-    }
+    let items: Item[] = [];
 
-    async function persist(item: Item | Item[]) {
-        if (Array.isArray(item)) {
-            let items = item;
-            for (const item of items) {
-                await persist(item);
-            }
-        } else {
-            let identifier = (item[cacheId] as ToString).toString();
-            await storageEngine.set(identifier, item);
-        }
-    }
-
-    async function deletePersisted(item: Item | Item[]) {
-        if (Array.isArray(item)) {
-            let items = item;
-            for (const item of items) {
-                await deletePersisted(item);
-            }
-        } else {
-            let identifier = (item[cacheId] as ToString).toString();
-            await storageEngine.delete(identifier);
-        }
-    }
-
-    // Populate the state with any existing database data
-    let existingItems = await storageEngine.get();
-    if (existingItems) {
-        items = existingItems;
-    }
-
-    const collection: Collection<Item> = {
+    const collection = new (class extends EventTarget {
         get items() {
             return items;
-        },
+        }
+
+        #setItems(newValue: Item[]) {
+            items = newValue;
+            this.dispatchEvent(new CollectionEvent(newValue));
+        }
+
         get isEmpty() {
-            return items.length === 0;
-        },
-        async add(item) {
+            return this.items.length === 0;
+        }
+
+        async add(item: Item | Item[]) {
             let currentValuesMap = new Map<string, Item>();
 
             if (Array.isArray(item)) {
@@ -103,7 +92,7 @@ export async function createCollection<Item extends object>(
                 }
 
                 // Take the current items array and turn it into a Map.
-                for (let currentItem of items) {
+                for (let currentItem of this.items) {
                     currentValuesMap.set(
                         (currentItem[cacheId] as ToString).toString(),
                         currentItem,
@@ -116,11 +105,11 @@ export async function createCollection<Item extends object>(
                 }
 
                 // We persist only the newly added items, rather than rewriting all of the items
-                await persist(Array.from(addedItemsMap.values()));
+                await this.#persist(Array.from(addedItemsMap.values()));
             } else {
                 let identifier = (item[cacheId] as ToString).toString();
 
-                for (let currentItem of items) {
+                for (let currentItem of this.items) {
                     currentValuesMap.set(
                         (currentItem[cacheId] as ToString).toString(),
                         currentItem,
@@ -130,35 +119,60 @@ export async function createCollection<Item extends object>(
                 currentValuesMap.set(identifier, item);
 
                 // We persist only the newly added item, rather than rewriting all of the items
-                await persist(item);
+                await this.#persist(item);
             }
 
-            setItems(Array.from(currentValuesMap.values()));
-        },
-        async delete(item) {
+            this.#setItems(Array.from(currentValuesMap.values()));
+        }
+
+        async delete(item: Item | Item[]) {
             let values: Item[] = Array.isArray(item) ? item : [item];
-            await deletePersisted(item);
-            setItems(
-                items.filter(
+            await this.#deletePersisted(item);
+            this.#setItems(
+                this.items.filter(
                     currentItem =>
                         !values
                             .map(i => String(i[cacheId]))
                             .includes((currentItem[cacheId] as ToString).toString()),
                 ),
             );
-        },
+        }
+
         async clear() {
             await storageEngine.clear();
-            setItems([]);
-        },
-        subscribe(observable) {
-            observers.push(observable);
-            return () => {
-                let idx = observers.indexOf(observable);
-                delete observers[idx];
-            };
-        },
-    };
+            this.#setItems([]);
+        }
+
+        async #persist(item: Item | Item[]) {
+            if (Array.isArray(item)) {
+                let items = item;
+                for (const item of items) {
+                    await this.#persist(item);
+                }
+            } else {
+                let identifier = (item[cacheId] as ToString).toString();
+                await storageEngine.set(identifier, item);
+            }
+        }
+
+        async #deletePersisted(item: Item | Item[]) {
+            if (Array.isArray(item)) {
+                let items = item;
+                for (const item of items) {
+                    await this.#deletePersisted(item);
+                }
+            } else {
+                let identifier = (item[cacheId] as ToString).toString();
+                await storageEngine.delete(identifier);
+            }
+        }
+    })();
+
+    // Populate the state with any existing database data
+    let existingItems = await storageEngine.get();
+    if (existingItems) {
+        items = existingItems;
+    }
 
     if (initialValue !== undefined && collection.isEmpty) {
         collection.add(initialValue);
