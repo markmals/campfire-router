@@ -1,4 +1,4 @@
-import { createCollection, createIndexedDBStorageEngine } from '@campfirejs/storage';
+import { createCollection, IndexedDBStorageEngine } from '@campfirejs/storage';
 import { matchSorter } from 'match-sorter';
 
 export interface IContact {
@@ -70,7 +70,7 @@ export const defaultContacts: IContact[] = [
 ];
 
 const contactsCollection = await createCollection<IContact>({
-    storage: createIndexedDBStorageEngine({ prefix: 'campfire-contacts' }),
+    storage: new IndexedDBStorageEngine('campfire-contacts'),
     initialValue: defaultContacts,
 });
 

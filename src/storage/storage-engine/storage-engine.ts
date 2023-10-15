@@ -1,38 +1,24 @@
-/** @private */
-export function prefixKey(prefix: string, key: string): string {
-    return key.startsWith(`${prefix}:`) ? key : `${prefix}:${key}`;
-}
-
-/** @private */
-export async function clearAll(keys: () => Promise<string[]>, del: (key: string) => Promise<void>) {
-    for (let key of await keys()) {
-        await del(key);
-    }
-}
-
-const utils = {
-    prefixKey,
-    clearAll,
-};
-
-export type Utilities = typeof utils;
-
 export type StorageValue = null | string | number | boolean | object;
 
-export type StorageEngine<Item extends StorageValue> = {
-    keys(): Promise<string[]>;
+export abstract class StorageEngine<Value extends StorageValue> {
+    public constructor(protected prefix: string) {}
 
-    get(): Promise<Item[]>;
-    get(key: string): Promise<Item | null>;
+    protected prefixKey(key: string): string {
+        return key.startsWith(`${this.prefix}:`) ? key : `${this.prefix}:${key}`;
+    }
 
-    set(key: string, value: Item): Promise<void>;
+    public abstract keys(): Promise<string[]>;
 
-    delete(key: string): Promise<void>;
-    clear(): Promise<void>;
-};
+    public abstract get(): Promise<Value[]>;
+    public abstract get(key: string): Promise<Value | null>;
 
-export function defineStorageEngine<Options>(
-    builder: (options: Options, utilities: Utilities) => StorageEngine<StorageValue>,
-): <Item extends StorageValue>(options: Options) => StorageEngine<Item> {
-    return (options: Options) => builder(options, utils) as StorageEngine<any>;
+    public abstract set(key: string, value: Value): Promise<void>;
+
+    public abstract delete(key: string): Promise<void>;
+
+    public async clear(): Promise<void> {
+        for (let key of await this.keys()) {
+            await this.delete(key);
+        }
+    }
 }
