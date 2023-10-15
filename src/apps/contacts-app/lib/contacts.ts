@@ -76,8 +76,7 @@ const contactsCollection = await createCollection<IContact>({
 
 export async function getContacts(query?: string) {
     await fakeNetwork(`getContacts:${query}`);
-    const contacts = contactsCollection.items ?? [];
-    return matchSorter(contacts, query ?? '', {
+    return matchSorter(contactsCollection.items, query ?? '', {
         keys: ['last', 'first', 'createdAt'],
     });
 }
@@ -92,15 +91,13 @@ export async function createContact() {
 
 export async function getContact(id: string) {
     await fakeNetwork(`contact:${id}`);
-    const contacts = contactsCollection.items ?? [];
-    const contact = contacts.find(contact => contact.id === id) ?? null;
+    const contact = contactsCollection.items.find(contact => contact.id === id) ?? null;
     return contact;
 }
 
 export async function updateContact(id: string, updates: Partial<IContact>) {
     await fakeNetwork();
-    const contacts = contactsCollection.items ?? [];
-    const contact = contacts.find(contact => contact.id === id);
+    const contact = contactsCollection.items.find(contact => contact.id === id);
     if (contact === undefined) {
         throw new Error(`No contact found for ${id}.`);
     }
@@ -111,8 +108,7 @@ export async function updateContact(id: string, updates: Partial<IContact>) {
 
 export async function deleteContact(id: string) {
     await fakeNetwork();
-    const contacts = contactsCollection.items ?? [];
-    let contact = contacts.find(contact => contact.id === id);
+    let contact = contactsCollection.items.find(contact => contact.id === id);
     if (contact) {
         await contactsCollection.delete(contact);
     }
