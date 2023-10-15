@@ -18,23 +18,23 @@ export class TaskItemElement extends LitElement {
     @property({ attribute: false })
     accessor task!: ITask;
 
-    #router = new Router(this);
-    #fetcher!: FetcherWithDirective<unknown>;
+    router = new Router(this);
+    fetcher!: FetcherWithDirective<unknown>;
 
     connectedCallback() {
         super.connectedCallback();
-        this.#fetcher = this.#router.getFetcher();
+        this.fetcher = this.router.getFetcher();
     }
 
     get isDeleting() {
-        return this.#fetcher.formData != null;
+        return this.fetcher.formData != null;
     }
 
     render() {
         return html`
             <span>${this.task.name}</span>
-            <a href="/${this.task.id}" ${this.#router.enhanceLink()}>Open</a>
-            <form style="display: inline" action="/" method="post" ${this.#fetcher.enhanceForm()}>
+            <a href="/${this.task.id}" ${this.router.enhanceLink()}>Open</a>
+            <form style="display: inline" action="/" method="post" ${this.fetcher.enhanceForm()}>
                 <button
                     type="submit"
                     name="taskId"
@@ -57,15 +57,15 @@ async function newTaskAction({ request }: ActionFunctionArgs) {
 
 @customElement('new-task')
 export class NewTaskRoute extends LitElement {
-    #router = new Router(this);
+    router = new Router(this);
 
     get isAdding() {
-        return this.#router.navigation.state !== 'idle';
+        return this.router.navigation.state !== 'idle';
     }
 
     render() {
         return html`
-            <form method="post" action="/new" ${this.#router.enhanceForm()}>
+            <form method="post" action="/new" ${this.router.enhanceForm()}>
                 <input name="newTask" />
                 <button type="submit" ?disabled=${this.isAdding}>
                     ${this.isAdding ? 'Adding...' : 'Add'}
@@ -78,16 +78,20 @@ export class NewTaskRoute extends LitElement {
 async function taskLoader({ params }: LoaderFunctionArgs) {
     await sleep();
     return {
-        task: getTasks().find(t => t.id === params.id),
+        task: getTasks().find(t => t.id === params.id)!,
     };
 }
 
 @customElement('task-detail')
 export class TaskRoute extends LitElement {
-    #router = new Router(this);
+    router = new Router(this);
+
+    get data() {
+        return this.router.loaderData as Awaited<ReturnType<typeof taskLoader>>;
+    }
 
     get task() {
-        return (this.#router.loaderData as Awaited<ReturnType<typeof taskLoader>>)?.task;
+        return this.data.task;
     }
 
     render() {
@@ -111,10 +115,14 @@ async function tasksAction({ request }: ActionFunctionArgs) {
 
 @customElement('task-list')
 export class TasksRoute extends LitElement {
-    #router = new Router(this);
+    router = new Router(this);
+
+    get data() {
+        return this.router.loaderData as Awaited<ReturnType<typeof tasksLoader>>;
+    }
 
     get tasks() {
-        return (this.#router.loaderData as Awaited<ReturnType<typeof tasksLoader>>).tasks;
+        return this.data.tasks;
     }
 
     render() {
@@ -126,15 +134,15 @@ export class TasksRoute extends LitElement {
                     task => html`<li><task-item .task="${task}"></task-item></li>`,
                 )}
             </ul>
-            <a href="/new" ${this.#router.enhanceLink()}>Add New Task</a>
-            ${this.#router.outlet()}
+            <a href="/new" ${this.router.enhanceLink()}>Add New Task</a>
+            ${this.router.outlet()}
         `;
     }
 }
 
 @customElement('tasks-app')
 export class TasksApp extends LitElement {
-    routes = [
+    static routes = [
         {
             path: '/',
             loader: tasksLoader,
@@ -164,14 +172,9 @@ export class TasksApp extends LitElement {
         },
     ];
 
-    #provider: RouterProvider;
-
-    constructor() {
-        super();
-        this.#provider = new RouterProvider(this, this.routes, html`<p>Loading...</p>`);
-    }
+    provider = new RouterProvider(this, TasksApp.routes, html`<p>Loading...</p>`);
 
     render() {
-        return this.#provider.outlet();
+        return this.provider.render();
     }
 }

@@ -344,7 +344,7 @@ export class RouterProvider implements ReactiveController {
         this.#unsubscribe();
     }
 
-    outlet() {
+    render() {
         if (!this.#state.initialized) {
             return this.#fallback ? this.#fallback : html`<span></span>`;
         }
