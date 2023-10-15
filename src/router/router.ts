@@ -1,7 +1,11 @@
-import type { ReadonlySignal, Signal } from '@lit-labs/preact-signals';
-import { computed, signal } from '@lit-labs/preact-signals';
 import { ContextConsumer, ContextProvider } from '@lit/context';
-import type { Fetcher, Path, RelativeRoutingType, RouterState, To } from '@remix-run/router';
+import type {
+    Path,
+    RelativeRoutingType,
+    Router as RemixRouter,
+    RouterState,
+    To,
+} from '@remix-run/router';
 import {
     createPath,
     resolveTo,
@@ -13,7 +17,14 @@ import type { TemplateResult } from 'lit';
 import { html, isServer, nothing, type ReactiveController, type ReactiveElement } from 'lit';
 import { when } from 'lit/directives/when.js';
 import invariant from 'tiny-invariant';
-import { routeContext, routeErrorContext, routerContext } from './context.js';
+import type { IRouteContext } from './context.js';
+import {
+    routeContext,
+    routeErrorContext,
+    routeIdContext,
+    routerContext,
+    routerStateContext,
+} from './context.js';
 import { form, link } from './directives.js';
 import { createBrowserRouter, createMemoryRouter } from './routers.js';
 import type {
@@ -21,8 +32,6 @@ import type {
     CreateMemoryRouterOpts,
     DataRouteMatch,
     FetcherWithDirective,
-    IRouteContext,
-    IRouterContext,
     NavigateOptions,
     RouteObject,
     SubmitFunction,
@@ -31,9 +40,19 @@ import { createURL, getPathContributingMatches, submitImpl } from './utils.js';
 
 let fetcherId = 0;
 
+// FIXME: Element using Router scheduled an update after an update completed, causing a
+// new update to be scheduled. This is inefficient and should be avoided unless the next
+// update can only be scheduled as a side effect of the previous update. See
+// https://lit.dev/msg/change-in-update for more information.
+
 export class Router implements ReactiveController {
+    #host;
+
     #routerConsumer;
     #routeConsumer;
+
+    #routerStateConsumer;
+    #routeIdConsumer;
     #routeErrorConsumer;
 
     #disposables: (() => void)[] = [];
@@ -42,19 +61,45 @@ export class Router implements ReactiveController {
     }
 
     constructor(host: ReactiveElement) {
+        this.#host = host;
         host.addController(this);
+
         this.#routerConsumer = new ContextConsumer(host, { context: routerContext });
         this.#routeConsumer = new ContextConsumer(host, { context: routeContext });
-        this.#routeErrorConsumer = new ContextConsumer(host, { context: routeErrorContext });
+
+        this.#routerStateConsumer = new ContextConsumer(host, {
+            context: routerStateContext,
+            subscribe: true,
+        });
+
+        this.#routeIdConsumer = new ContextConsumer(host, {
+            context: routeIdContext,
+            subscribe: true,
+        });
+
+        this.#routeErrorConsumer = new ContextConsumer(host, {
+            context: routeErrorContext,
+            subscribe: true,
+        });
     }
 
     hostDisconnected() {
         this.#disposables.forEach(dispose => dispose());
     }
 
-    get #routerContext(): IRouterContext {
+    get #router(): RemixRouter {
         invariant(this.#routerConsumer.value, 'No RouterContext available');
         return this.#routerConsumer.value;
+    }
+
+    get #state(): RouterState {
+        invariant(this.#routerStateConsumer.value, 'No RouterStateContext available');
+        return this.#routerStateConsumer.value;
+    }
+
+    get #routeId(): string {
+        invariant(this.#routeIdConsumer.value, 'No RouteIdContext available');
+        return this.#routeIdConsumer.value;
     }
 
     get #routeContext(): IRouteContext {
@@ -62,49 +107,42 @@ export class Router implements ReactiveController {
         return this.#routeConsumer.value;
     }
 
-    get #state() {
-        return this.#routerContext.state;
-    }
-
     get routeError(): unknown {
-        return (
-            this.#routeErrorConsumer.value?.error.value ||
-            this.#state.value.errors?.[this.#routeContext.id.value]
-        );
+        return this.#routeErrorConsumer.value || this.#state.errors?.[this.#routeId];
     }
 
     get navigationType(): NavigationType {
-        return this.#state.value.historyAction;
+        return this.#state.historyAction;
     }
 
     get location(): Location {
-        return this.#state.value.location;
+        return this.#state.location;
     }
 
     get matches() {
-        return this.#state.value.matches.map(match => ({
+        return this.#state.matches.map(match => ({
             id: match.route.id,
             pathname: match.pathname,
             params: match.params,
-            data: this.#state.value.loaderData[match.route.id] as unknown,
+            data: this.#state.loaderData[match.route.id] as unknown,
             handle: match.route.handle as unknown,
         }));
     }
 
     get navigation(): Navigation {
-        return this.#state.value.navigation;
+        return this.#state.navigation;
     }
 
-    routeLoaderData(routeId: string): unknown {
-        return this.#state.value.loaderData[routeId];
-    }
+    routeLoaderData = (routeId: string): unknown => {
+        return this.#state.loaderData[routeId];
+    };
 
     get loaderData(): unknown {
-        return this.routeLoaderData(this.#routeContext.id.value);
+        return this.routeLoaderData(this.#routeId);
     }
 
     get actionData(): unknown {
-        return this.#state.value.actionData?.[this.#routeContext.id.value];
+        return this.#state.actionData?.[this.#routeId];
     }
 
     resolvedPath = (to: To, { relative }: { relative?: RelativeRoutingType } = {}): Path =>
@@ -116,13 +154,11 @@ export class Router implements ReactiveController {
         );
 
     href = (to: To): string =>
-        this.#routerContext.router.createHref(
-            createURL(this.#routerContext.router, createPath(this.resolvedPath(to))),
-        );
+        this.#router.createHref(createURL(this.#router, createPath(this.resolvedPath(to))));
 
     navigate = (to: To | number, options: NavigateOptions = {}) => {
         if (typeof to === 'number') {
-            this.#routerContext.router.navigate(to);
+            this.#router.navigate(to);
             return;
         }
 
@@ -132,7 +168,7 @@ export class Router implements ReactiveController {
             this.location.pathname,
         );
 
-        this.#routerContext.router.navigate(path, {
+        this.#router.navigate(path, {
             replace: options.replace,
             state: options.state,
         });
@@ -157,56 +193,67 @@ export class Router implements ReactiveController {
     };
 
     submit: SubmitFunction = (target, options = {}) => {
-        submitImpl(this.#routerContext.router, this.formAction(), target, options);
+        submitImpl(this.#router, this.formAction(), target, options);
     };
 
     enhanceForm = (options: { replace: boolean } = { replace: false }) => {
-        return form(this, this.#routerContext, options.replace, null, null);
+        return form(this, this.#router, options.replace, null, null);
     };
 
     getFetcher = <TData = unknown>(): FetcherWithDirective<TData> => {
-        const { router } = this.#routerContext;
-        const { id } = this.#routeContext;
         const defaultAction = this.formAction();
         const fetcherKey = String(++fetcherId);
-        const fetcher = signal<Fetcher<TData>>(router.getFetcher<TData>(fetcherKey));
 
-        router.subscribe(() => (fetcher.value = router.getFetcher<TData>(fetcherKey)));
-        this.#onCleanup(() => router.deleteFetcher(fetcherKey));
+        // TODO: Make FetcherController
+        let fetcher = this.#router.getFetcher<TData>(fetcherKey);
+
+        this.#router.subscribe(() => {
+            fetcher = this.#router.getFetcher<TData>(fetcherKey);
+            this.#host.requestUpdate();
+        });
+
+        this.#onCleanup(() => this.#router.deleteFetcher(fetcherKey));
 
         return {
             get state() {
-                return fetcher.value.state;
+                return fetcher.state;
             },
             get formMethod() {
-                return fetcher.value.formMethod;
+                return fetcher.formMethod;
             },
             get formAction() {
-                return fetcher.value.formAction;
+                return fetcher.formAction;
             },
             get formEncType() {
-                return fetcher.value.formEncType;
+                return fetcher.formEncType;
             },
             get text() {
-                return fetcher.value.text;
+                return fetcher.text;
             },
             get formData() {
-                return fetcher.value.formData;
+                return fetcher.formData;
             },
             get json() {
-                return fetcher.value.json;
+                return fetcher.json;
             },
             get data() {
-                return fetcher.value.data;
+                return fetcher.data;
             },
             enhanceForm: (options = { replace: false }) => {
-                return form(this, this.#routerContext, options.replace, fetcherKey, id.value);
+                return form(this, this.#router, options.replace, fetcherKey, this.#routeId);
             },
-            submit(target, options = {}) {
-                return submitImpl(router, defaultAction, target, options, fetcherKey, id.value);
+            submit: (target, options = {}) => {
+                return submitImpl(
+                    this.#router,
+                    defaultAction,
+                    target,
+                    options,
+                    fetcherKey,
+                    this.#routeId,
+                );
             },
-            load(href) {
-                return router.fetch(fetcherKey, id.value, href);
+            load: href => {
+                return this.#router.fetch(fetcherKey, this.#routeId, href);
             },
         } as FetcherWithDirective<TData>;
     };
@@ -214,8 +261,8 @@ export class Router implements ReactiveController {
     outlet = () =>
         outletImpl({
             state: this.#state,
-            routeContext: this.#routeContext,
-            routeError: () => this.routeError,
+            routeId: this.#routeId,
+            routeError: this.routeError,
         });
 
     isActive = (to: To) => {
@@ -249,9 +296,9 @@ export class Router implements ReactiveController {
 
     /** @private */
     routeMatches(id: string): DataRouteMatch[] {
-        return this.#state.value.matches.slice(
+        return this.#state.matches.slice(
             0,
-            this.#state.value.matches.findIndex(m => m.route.id === id) + 1,
+            this.#state.matches.findIndex(m => m.route.id === id) + 1,
         );
     }
 }
@@ -268,20 +315,29 @@ function createDefaultRouter(
 }
 
 export class RouterProvider implements ReactiveController {
-    #state: Signal<RouterState>;
+    #state: RouterState;
     #unsubscribe: () => void;
     #fallback?: TemplateResult;
 
     constructor(host: ReactiveElement, routes: RouteObject[], fallback?: TemplateResult) {
         host.addController(this);
 
-        const router = createDefaultRouter(routes);
-        this.#state = signal(router.state);
-        this.#unsubscribe = router.subscribe(state => (this.#state.value = state));
-        this.#fallback = fallback;
+        const routerProvider = new ContextProvider(host, { context: routerContext });
+        const stateProvider = new ContextProvider(host, { context: routerStateContext });
 
-        const provider = new ContextProvider(host, { context: routerContext });
-        provider.setValue({ router, state: this.#state });
+        const router = createDefaultRouter(routes);
+        routerProvider.setValue(router);
+
+        this.#state = router.state;
+        stateProvider.setValue(router.state);
+
+        this.#unsubscribe = router.subscribe(state => {
+            this.#state = state;
+            stateProvider.setValue(state);
+            host.requestUpdate();
+        });
+
+        this.#fallback = fallback;
     }
 
     hostDisconnected() {
@@ -289,46 +345,35 @@ export class RouterProvider implements ReactiveController {
     }
 
     outlet() {
-        if (!this.#state.value.initialized) {
+        if (!this.#state.initialized) {
             return this.#fallback ? this.#fallback : html`<span></span>`;
         }
 
-        return outletImpl(
-            {
-                state: this.#state,
-                routeError: () => {},
-            },
-            { root: true },
-        );
+        return outletImpl({ state: this.#state, root: true });
     }
 }
 
-function outletImpl(
-    {
-        routeContext,
-        state,
-        routeError,
-    }: {
-        routeContext?: IRouteContext;
-        state: ReadonlySignal<RouterState>;
-        routeError: () => unknown;
-    },
-    { root }: { root: boolean } = { root: false },
-): TemplateResult {
-    const routeCtx = root ? null : routeContext;
-    const idx = state.value.matches.findIndex(m => m.route.id === routeCtx?.id.value);
-    const matchToRender = state.value.matches[idx + 1];
+function outletImpl({
+    routeId,
+    state,
+    routeError,
+    root = false,
+}: {
+    routeId?: string;
+    state: RouterState;
+    routeError?: unknown;
+    root?: boolean;
+}): TemplateResult {
+    const id = root ? null : routeId;
+    const idx = state.matches.findIndex(m => m.route.id === id);
+    const matchToRender = state.matches[idx + 1];
     const error = (
-        state.value.errors?.[matchToRender.route.id] != null
-            ? Object.values(state.value.errors)[0]
-            : null
+        state.errors?.[matchToRender.route.id] != null ? Object.values(state.errors)[0] : null
     ) as unknown;
     const match = matchToRender as DataRouteMatch;
 
     if (idx < 0 && !root) {
-        throw new Error(
-            `Unable to find <router-outlet> match for route id: ${routeCtx?.id || '_root_'}`,
-        );
+        throw new Error(`Unable to find <router-outlet> match for route id: ${id || '_root_'}`);
     }
 
     return html`
@@ -336,9 +381,9 @@ function outletImpl(
             match,
             () => html`
                 <route-wrapper
-                    .routeId="${computed(() => state.value.matches[idx + 1]?.route.id)}"
+                    .routeId="${state.matches[idx + 1]?.route.id}"
                     .match="${match}"
-                    .routeError="${routeError()}"
+                    .routeError="${routeError}"
                     .error="${error}"
                     .root="${root}"
                 ></route-wrapper>

@@ -1,7 +1,6 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from '@campfirejs/router';
 import { Router } from '@campfirejs/router';
-import { WatchedElement } from '@campfirejs/signals';
-import { css, html } from 'lit';
+import { LitElement, css, html } from 'lit';
 import { customElement } from 'lit/decorators.js';
 import { when } from 'lit/directives/when.js';
 import { getContact, updateContact } from '~/lib/contacts';
@@ -29,7 +28,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 }
 
 @customElement('contact-details')
-export class ContactDetailsElement extends WatchedElement {
+export class ContactDetailsElement extends LitElement {
     static styles = [
         sharedStyles,
         css`

@@ -1,4 +1,4 @@
-import { html } from 'lit';
+import { LitElement, html } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import { repeat } from 'lit/directives/repeat.js';
 
@@ -8,14 +8,13 @@ import type {
     LoaderFunctionArgs,
 } from '@campfirejs/router';
 import { Router, RouterProvider, redirect } from '@campfirejs/router';
-import { WatchedElement } from '@campfirejs/signals';
 
 import type { ITask } from './tasks';
 import { addTask, deleteTask, getTasks } from './tasks';
 import { sleep } from './utils';
 
 @customElement('task-item')
-export class TaskItemElement extends WatchedElement {
+export class TaskItemElement extends LitElement {
     @property({ attribute: false })
     accessor task!: ITask;
 
@@ -57,7 +56,7 @@ async function newTaskAction({ request }: ActionFunctionArgs) {
 }
 
 @customElement('new-task')
-export class NewTaskRoute extends WatchedElement {
+export class NewTaskRoute extends LitElement {
     #router = new Router(this);
 
     get isAdding() {
@@ -84,7 +83,7 @@ async function taskLoader({ params }: LoaderFunctionArgs) {
 }
 
 @customElement('task-detail')
-export class TaskRoute extends WatchedElement {
+export class TaskRoute extends LitElement {
     #router = new Router(this);
 
     get task() {
@@ -111,7 +110,7 @@ async function tasksAction({ request }: ActionFunctionArgs) {
 }
 
 @customElement('task-list')
-export class TasksRoute extends WatchedElement {
+export class TasksRoute extends LitElement {
     #router = new Router(this);
 
     get tasks() {
@@ -134,7 +133,7 @@ export class TasksRoute extends WatchedElement {
 }
 
 @customElement('tasks-app')
-export class TasksApp extends WatchedElement {
+export class TasksApp extends LitElement {
     routes = [
         {
             path: '/',

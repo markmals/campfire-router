@@ -1,16 +1,14 @@
-import type { ReadonlySignal } from '@lit-labs/preact-signals';
-import { SignalWatcher, signal } from '@lit-labs/preact-signals';
 import { ContextProvider } from '@lit/context';
 import { isRouteErrorResponse } from '@remix-run/router';
 import { LitElement, css, html, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { when } from 'lit/directives/when.js';
-import { routeContext, routeErrorContext } from './context.js';
+import { routeContext, routeErrorContext, routeIdContext } from './context.js';
 import { Router } from './router.js';
 import type { DataRouteMatch } from './types.js';
 
 @customElement('route-wrapper')
-export class RouteWrapper extends SignalWatcher(LitElement) {
+export class RouteWrapper extends LitElement {
     static styles = [
         css`
             :host {
@@ -19,41 +17,57 @@ export class RouteWrapper extends SignalWatcher(LitElement) {
         `,
     ];
 
-    @property({ attribute: false })
     @state()
-    accessor routeId!: ReadonlySignal<string>;
+    accessor #routeId!: string;
+
+    get routeId() {
+        return this.#routeId;
+    }
 
     @property({ attribute: false })
-    @state()
+    set routeId(newValue: string) {
+        this.#routeId = newValue;
+        this.#routeIdProvider.setValue(newValue);
+    }
+
+    @property({ attribute: false })
     accessor match!: DataRouteMatch;
 
     @property({ attribute: false })
-    @state()
     accessor routeError!: unknown;
 
-    @property({ attribute: false })
     @state()
-    accessor error!: unknown;
+    accessor #error: unknown;
+
+    get error() {
+        return this.#error;
+    }
 
     @property({ attribute: false })
-    @state()
+    set error(newValue: unknown) {
+        this.#error = newValue;
+        this.#errorProvider.setValue(newValue);
+    }
+
+    @property({ attribute: false })
     accessor root!: boolean;
 
-    #controller = new Router(this);
+    #router = new Router(this);
+
+    #routeIdProvider = new ContextProvider(this, { context: routeIdContext });
     #routeProvider = new ContextProvider(this, { context: routeContext });
     #errorProvider = new ContextProvider(this, { context: routeErrorContext });
 
-    #error = signal(this.error);
-    #dispose = () => {};
-
     #errorCallback = (event: ErrorEvent) => {
         // event.preventDefault();
-        this.#error.value = event.error;
+        this.#error = event.error;
+        // console.error(this.#error);
     };
 
     #rejectionCallback = (event: PromiseRejectionEvent) => {
         // event.preventDefault();
-        this.#error.value = event.reason;
+        this.#error = event.reason;
+        // console.error(this.#error);
     };
 
     get index() {
@@ -61,34 +75,27 @@ export class RouteWrapper extends SignalWatcher(LitElement) {
     }
 
     get routeMatches() {
-        return this.#controller.routeMatches(this.routeId.value);
+        return this.#router.routeMatches(this.routeId);
     }
 
     connectedCallback() {
         super.connectedCallback();
+        this.#routeIdProvider.setValue(this.routeId);
         this.#routeProvider.setValue({
-            id: this.routeId,
             index: this.index,
             matches: this.routeMatches,
         });
 
-        // this.#dispose = effect(() => {
-        //     if (this.#error.value) {
-        //         console.error(this.#error.value);
-        //     }
-        // });
-
         window.addEventListener('error', this.#errorCallback);
         window.addEventListener('unhandledrejection', this.#rejectionCallback);
 
-        this.#errorProvider.setValue({ error: this.#error });
+        this.#errorProvider.setValue(this.error);
     }
 
     disconnectedCallback() {
         super.disconnectedCallback();
         window.removeEventListener('error', this.#errorCallback);
         window.removeEventListener('unhandledrejection', this.#rejectionCallback);
-        this.#dispose();
     }
 
     render() {

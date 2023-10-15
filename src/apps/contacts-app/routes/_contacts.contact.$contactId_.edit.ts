@@ -1,6 +1,5 @@
 import { Router, redirect, type ActionFunctionArgs } from '@campfirejs/router';
-import { WatchedElement } from '@campfirejs/signals';
-import { css, html } from 'lit';
+import { LitElement, css, html } from 'lit';
 import { customElement } from 'lit/decorators.js';
 import { updateContact } from '~/lib/contacts';
 import { sharedStyles } from '~/styles/styles';
@@ -14,7 +13,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 }
 
 @customElement('contact-edit')
-export class EditContactElement extends WatchedElement {
+export class EditContactElement extends LitElement {
     static styles = [
         sharedStyles,
         css`

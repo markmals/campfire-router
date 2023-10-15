@@ -1,13 +1,13 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable no-empty */
-import type { FormMethod } from '@remix-run/router';
+import type { FormMethod, Router as RemixRouter } from '@remix-run/router';
 import type { Part } from 'lit';
 import { noChange } from 'lit';
 import type { DirectiveParameters, PartInfo } from 'lit/async-directive.js';
 import { AsyncDirective, PartType, directive } from 'lit/async-directive.js';
 import type { Router } from './router.js';
-import type { HTMLFormSubmitter, IRouterContext, NavigateFunction } from './types.js';
+import type { HTMLFormSubmitter, NavigateFunction } from './types.js';
 import { submitImpl } from './utils.js';
 
 class LinkDirective extends AsyncDirective {
@@ -75,8 +75,8 @@ class FormDirective extends AsyncDirective {
     }
 
     render(
-        _controller: Router,
-        _routerContext: IRouterContext,
+        _router: Router,
+        _remixRouter: RemixRouter,
         _replace: boolean,
         _fetcherKey: string | null,
         _routeId: string | null,
@@ -116,8 +116,8 @@ class FormDirective extends AsyncDirective {
 
     private handleSubmit(
         form: HTMLFormElement,
-        controller: Router,
-        routerContext: IRouterContext,
+        router: Router,
+        remixRouter: RemixRouter,
         replace: boolean,
         fetcherKey: string | null,
         routeId: string | null,
@@ -137,8 +137,8 @@ class FormDirective extends AsyncDirective {
             } catch {}
 
             submitImpl(
-                routerContext.router,
-                controller.formAction(resolvedAction, { relative: 'route' }),
+                remixRouter,
+                router.formAction(resolvedAction, { relative: 'route' }),
                 event.submitter || event.currentTarget,
                 {
                     method: form.method as FormMethod,

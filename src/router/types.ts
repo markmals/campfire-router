@@ -1,4 +1,3 @@
-import type { ReadonlySignal } from '@lit-labs/preact-signals';
 import type {
     AgnosticIndexRouteObject,
     AgnosticNonIndexRouteObject,
@@ -6,8 +5,6 @@ import type {
     Fetcher,
     HydrationState,
     LazyRouteFunction,
-    Router,
-    RouterState,
     To,
 } from '@remix-run/router';
 import type { TemplateResult } from 'lit';
@@ -61,24 +58,6 @@ export type RouteMatch<
 > = AgnosticRouteMatch<ParamKey, RouteObjectType>;
 
 export type DataRouteMatch = RouteMatch<string, DataRouteObject>;
-
-// Global context holding the singleton router and the current state
-export interface IRouterContext {
-    router: Router;
-    state: ReadonlySignal<RouterState>;
-}
-
-// Wrapper context holding the route location in the current hierarchy
-export interface IRouteContext {
-    id: ReadonlySignal<string>;
-    matches: DataRouteMatch[];
-    index: boolean;
-}
-
-// Wrapper context holding the captured render error
-export interface IRouteErrorContext {
-    error: ReadonlySignal<unknown>;
-}
 
 interface CreateRouterOpts {
     basename?: string;

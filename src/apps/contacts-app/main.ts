@@ -1,9 +1,8 @@
-import { html } from 'lit';
+import { LitElement, html } from 'lit';
 import { customElement } from 'lit/decorators.js';
 
 import type { RouteObject } from '@campfirejs/router';
 import { RouterProvider } from '@campfirejs/router';
-import { WatchedElement } from '@campfirejs/signals';
 
 import { displayContents } from './styles/styles';
 
@@ -53,7 +52,7 @@ const routes: RouteObject[] = [
 ];
 
 @customElement('contacts-app')
-export class ContactsAppElement extends WatchedElement {
+export class ContactsAppElement extends LitElement {
     static styles = [displayContents];
     #provider = new RouterProvider(this, routes);
 

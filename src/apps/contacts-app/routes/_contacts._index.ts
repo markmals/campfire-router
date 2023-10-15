@@ -1,9 +1,8 @@
-import { WatchedElement } from '@campfirejs/signals';
-import { css, html } from 'lit';
+import { LitElement, css, html } from 'lit';
 import { customElement } from 'lit/decorators.js';
 
 @customElement('contacts-splash')
-export class ContactsSplashElement extends WatchedElement {
+export class ContactsSplashElement extends LitElement {
     static styles = [
         css`
             :host {

@@ -1,8 +1,6 @@
 import { Router, type LoaderFunctionArgs } from '@campfirejs/router';
-import { WatchedElement } from '@campfirejs/signals';
-import { effect } from '@lit-labs/preact-signals';
-import { css, html } from 'lit';
-import { customElement, query } from 'lit/decorators.js';
+import { LitElement, css, html } from 'lit';
+import { customElement } from 'lit/decorators.js';
 import { classMap } from 'lit/directives/class-map.js';
 import { repeat } from 'lit/directives/repeat.js';
 import { when } from 'lit/directives/when.js';
@@ -22,7 +20,7 @@ export async function action() {
 }
 
 @customElement('contacts-root')
-export class ContactsRootElement extends WatchedElement {
+export class ContactsRootElement extends LitElement {
     static styles = [
         sharedStyles,
         css`
@@ -203,25 +201,6 @@ export class ContactsRootElement extends WatchedElement {
         );
     }
 
-    @query('#q')
-    accessor searchInput!: HTMLInputElement;
-
-    #dispose: () => void = () => {};
-    connectedCallback() {
-        super.connectedCallback();
-        this.#dispose = effect(() => {
-            const query = this.data.q ?? '';
-            if (this.searchInput) {
-                this.searchInput.value = query;
-            }
-        });
-    }
-
-    disconnectedCallback() {
-        super.disconnectedCallback();
-        this.#dispose();
-    }
-
     render() {
         return html`
             <div id="sidebar">
@@ -233,7 +212,7 @@ export class ContactsRootElement extends WatchedElement {
                             class="${classMap({ loading: this.searching })}"
                             id="q"
                             name="q"
-                            value="${this.data.q ?? ''}"
+                            .value="${this.data.q ?? ''}"
                             @input="${this.#onInput}"
                             placeholder="Search"
                             type="search"
@@ -301,8 +280,6 @@ export class ContactsRootElement extends WatchedElement {
     }
 
     #onInput = (event: InputEvent & { currentTarget: HTMLInputElement }) => {
-        console.log(event.currentTarget.value);
-        // FIXME: This isn't rendering correctly, causes stutters every time you type
         // Remove empty query params when value is empty
         if (!event.currentTarget.value) {
             this.navigate('/');
@@ -311,6 +288,5 @@ export class ContactsRootElement extends WatchedElement {
 
         const isFirstSearch = this.data.q === null;
         this.submit(event.currentTarget.form, { replace: !isFirstSearch });
-        // this.navigate(`/?q=${event.currentTarget.value}`, { replace: !isFirstSearch });
     };
 }
