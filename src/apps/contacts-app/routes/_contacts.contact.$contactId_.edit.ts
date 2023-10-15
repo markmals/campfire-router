@@ -61,17 +61,17 @@ export class EditContactElement extends LitElement {
         `,
     ];
 
-    #router = new Router(this);
+    router = new Router(this);
 
     get contact() {
-        return (this.#router.loaderData as Awaited<ReturnType<typeof loader>>).contact;
+        return (this.router.loaderData as Awaited<ReturnType<typeof loader>>).contact;
     }
 
-    navigate = this.#router.navigate;
+    navigate = this.router.navigate;
 
     render() {
         return html`
-            <form method="post" ${this.#router.enhanceForm()}>
+            <form method="post" ${this.router.enhanceForm()}>
                 <p>
                     <span>Name</span>
                     <input

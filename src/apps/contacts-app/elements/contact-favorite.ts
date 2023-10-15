@@ -1,12 +1,11 @@
 import type { FetcherWithDirective } from '@campfirejs/router';
 import { Router } from '@campfirejs/router';
-import { WatchedElement } from '@campfirejs/signals';
-import { css, html } from 'lit';
+import { LitElement, css, html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { sharedStyles } from '~/styles/styles';
 
 @customElement('contact-favorite')
-export class ContactFavoriteElement extends WatchedElement {
+export class ContactFavoriteElement extends LitElement {
     static styles = [
         sharedStyles,
         css`
@@ -32,17 +31,17 @@ export class ContactFavoriteElement extends WatchedElement {
     @state()
     accessor favorite!: boolean;
 
-    #router = new Router(this);
-    #fetcher!: FetcherWithDirective<unknown>;
+    router = new Router(this);
+    fetcher!: FetcherWithDirective<unknown>;
 
     connectedCallback() {
         super.connectedCallback();
-        this.#fetcher = this.#router.getFetcher();
+        this.fetcher = this.router.getFetcher();
     }
 
     get #favorite() {
-        if (this.#fetcher.formData) {
-            return this.#fetcher.formData.get('favorite') === 'true';
+        if (this.fetcher.formData) {
+            return this.fetcher.formData.get('favorite') === 'true';
         }
 
         return this.favorite;
@@ -50,7 +49,7 @@ export class ContactFavoriteElement extends WatchedElement {
 
     render() {
         return html`
-            <form method="post" ${this.#fetcher.enhanceForm()}>
+            <form method="post" ${this.fetcher.enhanceForm()}>
                 <button
                     aria-label="${this.#favorite ? 'Remove from favorites' : 'Add to favorites'}"
                     name="favorite"

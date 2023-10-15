@@ -95,10 +95,10 @@ export class ContactDetailsElement extends LitElement {
         `,
     ];
 
-    #router = new Router(this);
+    router = new Router(this);
 
     get contact() {
-        return (this.#router.loaderData as Awaited<ReturnType<typeof loader>>)?.contact ?? {};
+        return (this.router.loaderData as Awaited<ReturnType<typeof loader>>)?.contact ?? {};
     }
 
     render() {
@@ -142,7 +142,7 @@ export class ContactDetailsElement extends LitElement {
                 ${when(this.contact.notes, () => html`<p>${this.contact.notes}</p>`)}
 
                 <div>
-                    <form action=${`contact/${this.contact.id}/edit`} ${this.#router.enhanceForm()}>
+                    <form action=${`contact/${this.contact.id}/edit`} ${this.router.enhanceForm()}>
                         <button type="submit">Edit</button>
                     </form>
                     <form
@@ -153,7 +153,7 @@ export class ContactDetailsElement extends LitElement {
                                 event.preventDefault();
                             }
                         }}
-                        ${this.#router.enhanceForm()}
+                        ${this.router.enhanceForm()}
                     >
                         <button type="submit">Delete</button>
                     </form>

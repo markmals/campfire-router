@@ -180,18 +180,18 @@ export class ContactsRootElement extends LitElement {
         `,
     ];
 
-    #router = new Router(this);
+    router = new Router(this);
 
     get navigation() {
-        return this.#router.navigation;
+        return this.router.navigation;
     }
 
     get data() {
-        return this.#router.loaderData as Awaited<ReturnType<typeof loader>>;
+        return this.router.loaderData as Awaited<ReturnType<typeof loader>>;
     }
 
-    submit = this.#router.submit;
-    navigate = this.#router.navigate;
+    submit = this.router.submit;
+    navigate = this.router.navigate;
 
     get searching() {
         return (
@@ -206,14 +206,14 @@ export class ContactsRootElement extends LitElement {
             <div id="sidebar">
                 <h1>Campfire Contacts</h1>
                 <div>
-                    <form id="search-form" action="/" role="search" ${this.#router.enhanceForm()}>
+                    <form id="search-form" action="/" role="search" ${this.router.enhanceForm()}>
                         <input
                             aria-label="Search contacts"
                             class="${classMap({ loading: this.searching })}"
                             id="q"
                             name="q"
                             .value="${this.data.q ?? ''}"
-                            @input="${this.#onInput}"
+                            @input="${this.onInput}"
                             placeholder="Search"
                             type="search"
                         />
@@ -224,7 +224,7 @@ export class ContactsRootElement extends LitElement {
                         ></div>
                         <div aria-live="polite" class="sr-only"></div>
                     </form>
-                    <form method="post" action="/" ${this.#router.enhanceForm()}>
+                    <form method="post" action="/" ${this.router.enhanceForm()}>
                         <button type="submit">New</button>
                     </form>
                 </div>
@@ -241,14 +241,14 @@ export class ContactsRootElement extends LitElement {
                                             <a
                                                 href="${`/contact/${contact.id}`}"
                                                 class="${classMap({
-                                                    active: this.#router.isActive(
+                                                    active: this.router.isActive(
                                                         `/contact/${contact.id}`,
                                                     ),
-                                                    pending: this.#router.isPending(
+                                                    pending: this.router.isPending(
                                                         `/contact/${contact.id}`,
                                                     ),
                                                 })}"
-                                                ${this.#router.enhanceLink()}
+                                                ${this.router.enhanceLink()}
                                             >
                                                 ${when(
                                                     contact.first || contact.last,
@@ -274,12 +274,12 @@ export class ContactsRootElement extends LitElement {
                 </nav>
             </div>
             <div class="${classMap({ loading: this.navigation.state !== 'idle' })}" id="detail">
-                ${this.#router.outlet()}
+                ${this.router.outlet()}
             </div>
         `;
     }
 
-    #onInput = (event: InputEvent & { currentTarget: HTMLInputElement }) => {
+    onInput = (event: InputEvent & { currentTarget: HTMLInputElement }) => {
         // Remove empty query params when value is empty
         if (!event.currentTarget.value) {
             this.navigate('/');

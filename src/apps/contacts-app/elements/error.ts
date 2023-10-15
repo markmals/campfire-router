@@ -1,11 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Router } from '@campfirejs/router';
-import { WatchedElement } from '@campfirejs/signals';
-import { css, html } from 'lit';
+import { LitElement, css, html } from 'lit';
 import { customElement } from 'lit/decorators.js';
 
 @customElement('contacts-error')
-export class ErrorElement extends WatchedElement {
+export class ErrorElement extends LitElement {
     static styles = [
         css`
             :host {
@@ -18,10 +17,10 @@ export class ErrorElement extends WatchedElement {
         `,
     ];
 
-    #router = new Router(this);
+    router = new Router(this);
 
     get #error() {
-        return this.#router.routeError as any;
+        return this.router.routeError as any;
     }
 
     render() {
