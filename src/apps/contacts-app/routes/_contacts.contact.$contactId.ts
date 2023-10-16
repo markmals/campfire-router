@@ -3,6 +3,7 @@ import { Router } from '@campfirejs/router';
 import { LitElement, css, html } from 'lit';
 import { customElement } from 'lit/decorators.js';
 import { when } from 'lit/directives/when.js';
+import type { IContact } from '~/lib/contacts';
 import { getContact, updateContact } from '~/lib/contacts';
 import { sharedStyles } from '~/styles/styles';
 
@@ -104,11 +105,11 @@ export class ContactDetailsElement extends LitElement {
     router = new Router(this);
 
     get data() {
-        return this.router.loaderData as Awaited<ReturnType<typeof loader>>;
+        return this.router.loaderData as Awaited<ReturnType<typeof loader>> | undefined;
     }
 
     get contact() {
-        return this.data.contact ?? {};
+        return this.data?.contact ?? ({} as IContact);
     }
 
     get avatarURL() {

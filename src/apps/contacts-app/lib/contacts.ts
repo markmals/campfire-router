@@ -33,10 +33,10 @@ export const defaultContacts: IContact[] = [
     },
     {
         id: 'chfc5lf',
-        first: 'Tania',
+        first: 'Tatiana',
         last: 'Castillo',
         avatar: 'https://i.imgur.com/t1MXkoL.jpg',
-        mastodon: '@tania@webtoo.ls',
+        mastodon: '@tatiana@webtoo.ls',
         favorite: false,
         createdAt: Date.now(),
     },
