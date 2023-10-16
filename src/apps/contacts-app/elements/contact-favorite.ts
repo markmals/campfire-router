@@ -9,19 +9,23 @@ export class ContactFavoriteElement extends LitElement {
     static styles = [
         sharedStyles,
         css`
-            :host form button {
+            button {
                 box-shadow: none;
                 font-size: 1.5rem;
                 font-weight: 400;
                 padding: 0;
             }
 
-            :host form button[value='true'] {
+            button:hover {
+                box-shadow: none;
+            }
+
+            button[value='true'] {
                 color: #a4a4a4;
             }
 
-            :host form button[value='true']:hover,
-            :host form button[value='false'] {
+            button[value='true']:hover,
+            button[value='false'] {
                 color: #eeb004;
             }
         `,

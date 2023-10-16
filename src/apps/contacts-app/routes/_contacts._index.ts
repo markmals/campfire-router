@@ -11,18 +11,18 @@ export class ContactsSplashElement extends LitElement {
                 color: #818181;
             }
 
-            :host a {
-                color: inherit;
-            }
-
-            :host a:hover {
-                color: #121212;
-            }
-
             :host:before {
                 display: block;
                 margin-bottom: 0.5rem;
                 content: url('/campfire-hero.svg');
+            }
+
+            a {
+                color: inherit;
+            }
+
+            a:hover {
+                color: #121212;
             }
         `,
     ];

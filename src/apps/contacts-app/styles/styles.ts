@@ -45,8 +45,8 @@ export const sharedStyles = css`
         transform: translateY(1px);
     }
 
-    form[action$='destroy'] button {
-        color: #f44250;
+    i {
+        color: #818181;
     }
 
     .sr-only {

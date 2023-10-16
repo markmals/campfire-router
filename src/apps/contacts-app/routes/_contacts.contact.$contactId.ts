@@ -37,48 +37,50 @@ export class ContactDetailsElement extends LitElement {
                 display: flex;
             }
 
-            :host h1 {
+            h1 {
                 display: flex;
                 align-items: flex-start;
                 gap: 1rem;
             }
-            :host h1 form {
+
+            h1 form {
                 display: flex;
                 align-items: center;
                 margin-top: 0.25rem;
             }
 
-            :host h1 {
+            h1 {
                 font-size: 2rem;
                 font-weight: 700;
                 margin: 0;
                 line-height: 1.2;
             }
 
-            :host h1 + p {
+            h1 + p {
                 margin: 0;
             }
 
-            :host h1 + p + p {
+            h1 + p + p {
                 white-space: break-spaces;
             }
 
-            :host h1:focus {
+            h1:focus {
                 outline: none;
                 color: hsl(224, 98%, 58%);
             }
 
-            :host a[href*='mastodon'] {
+            a[href*='mastodon'] {
                 display: flex;
                 font-size: 1.5rem;
                 color: #3992ff;
                 text-decoration: none;
             }
-            :host a[href*='mastodon']:hover {
+
+            a[href*='mastodon']:hover {
                 text-decoration: underline;
             }
 
-            :host img {
+            img {
                 width: 12rem;
                 height: 12rem;
                 background: #c8c8c8;
@@ -87,28 +89,46 @@ export class ContactDetailsElement extends LitElement {
                 object-fit: cover;
             }
 
-            :host h1 ~ div {
+            h1 ~ div {
                 display: flex;
                 gap: 0.5rem;
                 margin: 1rem 0;
+            }
+
+            form[action$='destroy'] button {
+                color: #f44250;
             }
         `,
     ];
 
     router = new Router(this);
 
+    get data() {
+        return this.router.loaderData as Awaited<ReturnType<typeof loader>>;
+    }
+
     get contact() {
-        return (this.router.loaderData as Awaited<ReturnType<typeof loader>>)?.contact ?? {};
+        return this.data.contact ?? {};
+    }
+
+    get avatarURL() {
+        return this.contact.avatar
+            ? this.contact.avatar
+            : 'https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png';
+    }
+
+    get socialURL() {
+        return `https://mastodon.social/${
+            this.contact.mastodon?.replace('@mastodon.social', '') ?? ''
+        }`;
     }
 
     render() {
         return html`
             <div>
                 <img
-                    alt=""
-                    src="${this.contact.avatar
-                        ? this.contact.avatar
-                        : 'https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png'}"
+                    alt="${this.contact.first} ${this.contact.last} avatar"
+                    src="${this.avatarURL}"
                 />
             </div>
 
@@ -116,7 +136,7 @@ export class ContactDetailsElement extends LitElement {
                 <h1>
                     ${when(
                         this.contact.first || this.contact.last,
-                        () => html`${this.contact.first} ${this.contact.last}`,
+                        () => `${this.contact.first} ${this.contact.last}`,
                         () => html`<i>No Name</i>`,
                     )}
                     <contact-favorite .favorite="${this.contact.favorite!}"></contact-favorite>
@@ -126,14 +146,7 @@ export class ContactDetailsElement extends LitElement {
                     this.contact.mastodon,
                     () => html`
                         <p>
-                            <a
-                                href=${`https://mastodon.social/${this.contact.mastodon!.replace(
-                                    '@mastodon.social',
-                                    '',
-                                )}`}
-                                rel="noreferrer"
-                                target="_blank"
-                            >
+                            <a href="${this.socialURL}" rel="noreferrer" target="_blank">
                                 ${this.contact.mastodon}
                             </a>
                         </p>
@@ -142,17 +155,16 @@ export class ContactDetailsElement extends LitElement {
                 ${when(this.contact.notes, () => html`<p>${this.contact.notes}</p>`)}
 
                 <div>
-                    <form action=${`contact/${this.contact.id}/edit`} ${this.router.enhanceForm()}>
+                    <form
+                        action="${`contact/${this.contact.id}/edit`}"
+                        ${this.router.enhanceForm()}
+                    >
                         <button type="submit">Edit</button>
                     </form>
                     <form
-                        action=${`contact/${this.contact.id}/destroy`}
+                        action="${`contact/${this.contact.id}/destroy`}"
                         method="post"
-                        @submit=${(event: SubmitEvent) => {
-                            if (!confirm('Please confirm you want to delete this record.')) {
-                                event.preventDefault();
-                            }
-                        }}
+                        @submit="${this.onSubmit}"
                         ${this.router.enhanceForm()}
                     >
                         <button type="submit">Delete</button>
@@ -160,5 +172,11 @@ export class ContactDetailsElement extends LitElement {
                 </div>
             </div>
         `;
+    }
+
+    onSubmit(event: SubmitEvent) {
+        if (!confirm('Please confirm you want to delete this record.')) {
+            event.preventDefault();
+        }
     }
 }
