@@ -19,17 +19,20 @@ export class ErrorElement extends LitElement {
 
     router = new Router(this);
 
-    get #error() {
+    get #routeError() {
         return this.router.routeError as any;
     }
 
+    get #error() {
+        return this.#routeError?.statusText || this.#routeError?.message;
+    }
+
     render() {
-        console.error(this.#error);
         return html`
             <h1>Oops!</h1>
             <p>Sorry, an unexpected error has occurred.</p>
             <p>
-                <i>${this.#error.statusText || this.#error.message}</i>
+                <i>${this.#error}</i>
             </p>
         `;
     }

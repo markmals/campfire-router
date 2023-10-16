@@ -59,15 +59,15 @@ export class RouteWrapper extends LitElement {
     #errorProvider = new ContextProvider(this, { context: routeErrorContext });
 
     #errorCallback = (event: ErrorEvent) => {
-        // event.preventDefault();
-        this.#error = event.error;
-        // console.error(this.#error);
+        event.preventDefault();
+        this.error = event.error;
+        console.error(this.error);
     };
 
     #rejectionCallback = (event: PromiseRejectionEvent) => {
-        // event.preventDefault();
-        this.#error = event.reason;
-        // console.error(this.#error);
+        event.preventDefault();
+        this.error = event.reason;
+        console.error(this.error);
     };
 
     get index() {
